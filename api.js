@@ -1,81 +1,42 @@
-import { error } from 'node:console';
-import http from 'node:http';
-import { URL } from 'node:url';
+import express from 'express'
 
-const porta = 3000
+const app = express()
+const PORT = 3000
 
-const tarefas = [
-    { id: 1, titulo: 'Lavar louça' },
-    { id: 2, titulo: 'Comprar uma RTX 5090' }
+const usuarios = [
+    {id: 1, nome: 'Alice'},
+    {id: 2, nome: 'Aurora'},
+    {id: 3, nome: 'Amanda'}
+
 ]
 
-const server = http.createServer((requisicao, resposta) => {
-    resposta.setHeader('Content-Type', 'application/json; charset=utf-8')
-
-    const urlobj = new URL(requisicao.url, `http://${requisicao.headers.host}`);
-
-    if (requisicao.method == 'GET' && requisicao.url == '/tarefas') {
-        resposta.statusCode = 200
-        resposta.end(JSON.stringify(tarefas))
-    } else if (requisicao.method == 'GET' && urlobj.pathname == '/tarefas/busca') {
-
-        const titulo = urlobj.searchParams.get('titulo');
-
-        const resultadoFiltrado = tarefas.filter((tarefa) => {
-            return tarefa.titulo.toLowerCase().includes(titulo || '');
-        })
-        resposta.statusCode == 200;
-        resposta.end(JSON.stringify(resultadoFiltrado))
-    } else if ( requisicao.method == "DELETE" && urlobj.pathname == '/tarefas'){
-        const id = urlobj.searchParams.get('id');
-        const tarefa = tarefas.find((t) => {
-            t.id == id
-        });
-        const index = tarefas.indexOf(tarefa);
-        const elementoDeletado = {}
-
-        if (index > -1){
-            elementoDeletado = tarefas.splice(index, 1)
-        }
-        resposta.end(JSON.stringify(elementoDeletado));
-    } 
-    else if (requisicao.method == 'POST' && requisicao.url == '/tarefas') {
-        let body = ''
-
-        requisicao.on('data', (chunk) => {
-            body += chunk.toString()
-        })
-
-        requisicao.on('end', () => {
-            try {
-                const movaTarefa = JSON.parse(body)
-
-                if (!novaTarefa.titulo) {
-                    resposta.statusCode = 400
-                    resposta.end(JSON.stringify({ error: 'o campo "título" é obrigatório.' }));
-                }
-
-                const tarefaCriada = {
-                    id: tarefas.length + 1,
-                    titulo: novaTarefa.titulo
-                }
-
-                tarefa.push(tarefaCriada)
-
-                respostas.statusCode = 201
-                resposta.end(JSON.stringify(tarefaCriada))
-
-            } catch (error) {
-                resposta.statusCode = 400
-                resposta.end(JSON.stringify({ error: 'Formato JSON inválido!' }))
-            }
-        })
-    } else {
-        resposta.statusCode = 404
-        resposta.end(JSON.stringify({ error: 'Pagina não encontrada.' }))
-    }
+app.get('/', (req, res) => {
+    res.send('Bem-vindo ao Express!')
 });
 
-server.listen(porta, () => {
-    console.log(`Servidor funcionando na porta ${porta}`);
+app.get('/usuarios', (req, res) => {
+    res.json(usuarios);
+});
+
+app.post('/usuario', () => {
+    const novoUsuario = {
+        id: usuarios.length +1, 
+        nome: 'Alana'
+    }
+
+    usuarios.push(novoUsuario);
+    res.status(201).json(novoUsuario);
+})
+
+app.get('/usuario/:id', (req, res) => {
+    const id = req.params.id;
+    const usuario = usuarios.find(u => u.id === parseInt (id));
+    if(!usuario) {
+        return res.status(404).json({error: "Usuário não encontrado!"});
+    }
+    res.json(usuario);
+});
+
+app.listen(PORT, () => {
+    console.log(`Servidor rodando em http://localhost:${PORT}`)
 });
